@@ -137,7 +137,12 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
         </label>
         <label>
           Competition
-          <input required value={form.competition} onChange={(event) => update('competition', event.target.value)} />
+          <select required value={form.competition} onChange={(event) => update('competition', event.target.value)}>
+            <option value="">Select competition</option>
+            <option value="La Liga">La Liga</option>
+            <option value="Serie A">Serie A</option>
+            <option value="Brasileirao">Brasileirao</option>
+          </select>
         </label>
         <label>
           Home team
