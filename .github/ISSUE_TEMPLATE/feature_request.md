@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-title: BT-X Feature Name
+title: Feature Summary
 labels: enhancement
 assignees: PedroCastro22
 
