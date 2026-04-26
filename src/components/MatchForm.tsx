@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { Save, X } from 'lucide-react';
 import type { Match, PredictionDirection } from '../types';
 import { parseLine } from '../utils/predictions';
+import { competitions, teamsByCompetition } from '../data/competition';
 
 type MatchFormProps = {
   editingMatch?: Match | null;
@@ -92,6 +93,16 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function updateCompetition(competition: string) {
+    setForm((current) => ({
+      ...current,
+      competition,
+      homeTeam: '',
+      awayTeam: '',
+    }));
+  }
+
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
@@ -116,6 +127,10 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
     setForm(emptyState);
   }
 
+  const availableTeams = form.competition
+  ? teamsByCompetition[form.competition as keyof typeof teamsByCompetition]
+  : [];
+
   return (
     <form className="match-form" onSubmit={handleSubmit}>
       <div className="form-header">
@@ -137,20 +152,36 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
         </label>
         <label>
           Competition
-          <select required value={form.competition} onChange={(event) => update('competition', event.target.value)}>
+          <select required value={form.competition} onChange={(event) => updateCompetition(event.target.value)}>
             <option value="">Select competition</option>
-            <option value="La Liga">La Liga</option>
-            <option value="Serie A">Serie A</option>
-            <option value="Brasileirao">Brasileirao</option>
+            {competitions.map((competition) => (
+              <option key={competition} value={competition}>
+                {competition}
+              </option>
+            ))}
           </select>
         </label>
         <label>
           Home team
-          <input required value={form.homeTeam} onChange={(event) => update('homeTeam', event.target.value)} />
+          <select required value={form.homeTeam} onChange={(event) => update('homeTeam', event.target.value)} disabled={!form.competition}>
+            <option value="">Select home team</option>
+            {availableTeams.map((team) => (
+              <option key={team} value={team}>
+                {team}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Away team
-          <input required value={form.awayTeam} onChange={(event) => update('awayTeam', event.target.value)} />
+          <select required value={form.awayTeam} onChange={(event) => update('awayTeam', event.target.value)} disabled={!form.competition}>
+            <option value="">Select away team</option>
+            {availableTeams.map((team) => (
+              <option key={team} value={team}>
+                {team}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Pred home goals
