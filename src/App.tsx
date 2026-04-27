@@ -25,6 +25,14 @@ export function App() {
     saveMatches(matches);
   }, [matches]);
 
+  const filteredDashboard = useMemo(() => {
+    if (!filters.competition) {
+      return matches;
+    }
+
+    return matches.filter((match) => match.competition === filters.competition);
+  }, [matches, filters.competition]);
+
   const filteredMatches = useMemo(() => {
     return matches
       .filter((match) => {
@@ -77,7 +85,7 @@ export function App() {
         </button>
       </header>
 
-      <Dashboard matches={matches} />
+      <Dashboard matches={filteredDashboard} competition={filters.competition} />
 
       <div className="content-grid">
         <MatchForm editingMatch={editingMatch} onSave={handleSave} onCancelEdit={() => setEditingMatch(null)} />

@@ -3,6 +3,7 @@ import { calculateAccuracy } from '../utils/predictions';
 
 type DashboardProps = {
   matches: Match[];
+  competition: string;
 };
 
 function StatCard({ label, value, detail }: { label: string; value: string; detail: string }) {
@@ -19,7 +20,7 @@ function accuracyLabel(accuracy: ReturnType<typeof calculateAccuracy>) {
   return `${accuracy.wins}/${accuracy.total}`;
 }
 
-export function Dashboard({ matches }: DashboardProps) {
+export function Dashboard({ matches, competition }: DashboardProps) {
   const goals = calculateAccuracy(matches, (results) => results.goals);
   const shots = calculateAccuracy(matches, (results) => results.totalShots);
   const shotsOnTarget = calculateAccuracy(matches, (results) => results.shotsOnTarget);
@@ -36,10 +37,17 @@ export function Dashboard({ matches }: DashboardProps) {
   ];
 
   return (
-    <section className="dashboard" aria-label="Prediction dashboard">
-      {cards.map((card) => (
-        <StatCard key={card.label} {...card} />
-      ))}
+    <section className="dashboard-section" aria-label="Prediction dashboard">
+      <div className="dashboard-heading">
+        <h2>{competition || 'All competitions'}</h2>
+        <span>Accuracy stats</span>
+      </div>
+
+      <div className="dashboard">
+        {cards.map((card) => (
+          <StatCard key={card.label} {...card} />
+        ))}
+      </div>
     </section>
   );
 }
