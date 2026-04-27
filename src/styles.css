@@ -182,6 +182,7 @@ textarea {
 }
 
 .primary-button,
+.secondary-button,
 .icon-button {
   align-items: center;
   border: 0;
@@ -197,6 +198,21 @@ textarea {
   gap: 9px;
   min-height: 44px;
   padding: 0 16px;
+}
+
+.secondary-button {
+  background: #eef3f7;
+  border: 1px solid #ccd6e0;
+  border-radius: 6px;
+  color: #304052;
+  font-weight: 800;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 16px;
+}
+
+.header-action {
+  flex: 0 0 auto;
 }
 
 .icon-button {
@@ -301,6 +317,60 @@ td small {
   margin: 18px 0 0;
 }
 
+.modal-backdrop {
+  align-items: center;
+  background: rgba(18, 25, 35, 0.54);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 20;
+}
+
+.json-modal {
+  background: #ffffff;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  box-shadow: 0 24px 80px rgba(18, 25, 35, 0.22);
+  display: grid;
+  gap: 14px;
+  max-height: min(860px, calc(100vh - 40px));
+  padding: 18px;
+  width: min(980px, 100%);
+}
+
+.modal-header,
+.modal-actions {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modal-header h2 {
+  margin: 8px 0 0;
+}
+
+.json-editor {
+  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  min-height: min(560px, calc(100vh - 260px));
+  resize: vertical;
+  white-space: pre;
+}
+
+.form-error {
+  background: #fff0ef;
+  border: 1px solid #ffc9c2;
+  border-radius: 6px;
+  color: #9a2d23;
+  font-weight: 700;
+  margin: 0;
+  padding: 10px 12px;
+}
+
 @media (max-width: 1180px) {
   .dashboard {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -323,6 +393,15 @@ td small {
 
   .app-header h1 {
     font-size: 2.1rem;
+  }
+
+  .app-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .header-action {
+    width: 100%;
   }
 
   .dashboard,
