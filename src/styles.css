@@ -70,11 +70,34 @@ button {
   text-transform: uppercase;
 }
 
+.dashboard-section {
+  margin-bottom: 18px;
+}
+
+.dashboard-heading {
+  align-items: end;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.dashboard-heading h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.dashboard-heading span {
+  color: #617083;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .dashboard {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  margin-bottom: 18px;
 }
 
 .stat-card {
