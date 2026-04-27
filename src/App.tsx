@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Braces } from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
 import { Filters } from './components/Filters';
+import { JsonMatchesEditor } from './components/JsonMatchesEditor';
 import { MatchForm } from './components/MatchForm';
 import { MatchTable } from './components/MatchTable';
 import { loadMatches, saveMatches } from './storage';
@@ -17,6 +18,7 @@ const defaultFilters: MatchFilters = {
 export function App() {
   const [matches, setMatches] = useState<Match[]>(() => loadMatches());
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
+  const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
   const [filters, setFilters] = useState<MatchFilters>(defaultFilters);
 
   useEffect(() => {
@@ -69,6 +71,10 @@ export function App() {
           <h1>Football Prediction Tracker</h1>
           <p>Compare your pre-match lines against final goals, shots, and shots on target.</p>
         </div>
+        <button type="button" className="secondary-button header-action" onClick={() => setJsonEditorOpen(true)}>
+          <Braces size={18} />
+          Edit JSON
+        </button>
       </header>
 
       <Dashboard matches={matches} />
@@ -80,6 +86,16 @@ export function App() {
           <MatchTable matches={filteredMatches} onEdit={setEditingMatch} onDelete={handleDelete} />
         </div>
       </div>
+
+      <JsonMatchesEditor
+        matches={matches}
+        open={jsonEditorOpen}
+        onClose={() => setJsonEditorOpen(false)}
+        onSave={(nextMatches) => {
+          setMatches(nextMatches);
+          setEditingMatch(null);
+        }}
+      />
     </main>
   );
 }
