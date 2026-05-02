@@ -38,7 +38,7 @@ const emptyState: FormState = {
   predictedHomeGoals: '',
   predictedAwayGoals: '',
   goalDirection: 'over',
-  goalValue: '2.5',
+  goalValue: '1.5',
   shotsDirection: 'under',
   shotsValue: '27.5',
   sotDirection: 'under',
