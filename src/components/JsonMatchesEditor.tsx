@@ -9,9 +9,11 @@ type JsonMatchesEditorProps = {
   onSave: (matches: Match[]) => void;
 };
 
+// Required fields keep imported JSON compatible with the tracker UI and calculations.
 const requiredStringFields = ['date', 'competition', 'homeTeam', 'awayTeam'] as const;
 const requiredNumberFields = ['predictedHomeGoals', 'predictedAwayGoals'] as const;
 
+// Validate optional line objects before accepting imported match JSON.
 function isPredictionLine(value: unknown): value is PredictionLine {
   if (!value || typeof value !== 'object') {
     return false;
@@ -21,6 +23,7 @@ function isPredictionLine(value: unknown): value is PredictionLine {
   return (line.direction === 'over' || line.direction === 'under') && typeof line.value === 'number';
 }
 
+// Validate and normalize one imported match entry.
 function normalizeMatch(value: unknown, index: number): Match {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error(`Entry ${index + 1} must be an object.`);
@@ -28,24 +31,28 @@ function normalizeMatch(value: unknown, index: number): Match {
 
   const item = value as Partial<Match>;
 
+  // Core strings are required because the table and form cannot render unnamed fixtures.
   for (const field of requiredStringFields) {
     if (typeof item[field] !== 'string' || item[field].trim() === '') {
       throw new Error(`Entry ${index + 1} is missing "${field}".`);
     }
   }
 
+  // Predicted scores are required because every tracker row displays them.
   for (const field of requiredNumberFields) {
     if (typeof item[field] !== 'number' || Number.isNaN(item[field])) {
       throw new Error(`Entry ${index + 1} needs a numeric "${field}".`);
     }
   }
 
+  // Optional predicted lines must still be valid when present.
   for (const field of ['predictedTotalGoalsLine', 'predictedTotalShotsLine', 'predictedShotsOnTargetLine'] as const) {
     if (item[field] !== undefined && !isPredictionLine(item[field])) {
       throw new Error(`Entry ${index + 1} has an invalid "${field}".`);
     }
   }
 
+  // Optional final stats must be numeric when present so accuracy calculations are reliable.
   for (const field of ['actualHomeGoals', 'actualAwayGoals', 'actualTotalShots', 'actualShotsOnTarget'] as const) {
     if (item[field] !== undefined && (typeof item[field] !== 'number' || Number.isNaN(item[field]))) {
       throw new Error(`Entry ${index + 1} has an invalid "${field}".`);
@@ -59,6 +66,7 @@ function normalizeMatch(value: unknown, index: number): Match {
   const predictedHomeGoals = item.predictedHomeGoals as number;
   const predictedAwayGoals = item.predictedAwayGoals as number;
 
+  // Keep any optional imported fields, but trim user-facing strings and create missing ids.
   return {
     ...item,
     id: typeof item.id === 'string' && item.id.trim() !== '' ? item.id : crypto.randomUUID(),
@@ -72,6 +80,7 @@ function normalizeMatch(value: unknown, index: number): Match {
   };
 }
 
+// Parse the modal textarea into a normalized array of tracker matches.
 function parseMatchesJson(value: string): Match[] {
   const parsed = JSON.parse(value) as unknown;
 
@@ -83,10 +92,12 @@ function parseMatchesJson(value: string): Match[] {
 }
 
 export function JsonMatchesEditor({ matches, open, onClose, onSave }: JsonMatchesEditorProps) {
+  // Keep the textarea synced with the latest matches each time the modal opens.
   const serializedMatches = useMemo(() => JSON.stringify(matches, null, 2), [matches]);
   const [jsonValue, setJsonValue] = useState(serializedMatches);
   const [error, setError] = useState('');
 
+  // Reset modal contents and clear stale validation errors when opened.
   useEffect(() => {
     if (open) {
       setJsonValue(serializedMatches);
@@ -98,6 +109,7 @@ export function JsonMatchesEditor({ matches, open, onClose, onSave }: JsonMatche
     return null;
   }
 
+  // Validate JSON before replacing the saved tracker state.
   function handleSave() {
     try {
       const nextMatches = parseMatchesJson(jsonValue);
@@ -110,6 +122,7 @@ export function JsonMatchesEditor({ matches, open, onClose, onSave }: JsonMatche
 
   return (
     <div className="modal-backdrop" role="presentation">
+      {/* Dialog wraps the raw localStorage-style JSON editor. */}
       <section className="json-modal" role="dialog" aria-modal="true" aria-labelledby="json-editor-title">
         <div className="modal-header">
           <div>
@@ -124,6 +137,7 @@ export function JsonMatchesEditor({ matches, open, onClose, onSave }: JsonMatche
           </button>
         </div>
 
+        {/* Main editable JSON payload. */}
         <textarea
           className="json-editor"
           spellCheck={false}
@@ -136,6 +150,7 @@ export function JsonMatchesEditor({ matches, open, onClose, onSave }: JsonMatche
 
         {error ? <p className="form-error">{error}</p> : null}
 
+        {/* Footer actions either discard textarea edits or save validated JSON. */}
         <div className="modal-actions">
           <button type="button" className="secondary-button" onClick={onClose}>
             Cancel

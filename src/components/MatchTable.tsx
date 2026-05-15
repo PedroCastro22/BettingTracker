@@ -10,11 +10,13 @@ type MatchTableProps = {
 export function MatchTable({ matches, onEdit, onDelete }: MatchTableProps) {
   return (
     <section className="table-section">
+      {/* Section header gives the user quick feedback on filtered row count. */}
       <div className="section-heading">
         <h2>Recent matches</h2>
         <span>{matches.length} shown</span>
       </div>
 
+      {/* Horizontal wrapper keeps the stat-heavy table usable on smaller screens. */}
       <div className="table-wrap">
         <table>
           <thead>
@@ -30,6 +32,7 @@ export function MatchTable({ matches, onEdit, onDelete }: MatchTableProps) {
             </tr>
           </thead>
           <tbody>
+            {/* MatchRow owns row-specific calculations, badges, and action buttons. */}
             {matches.map((match) => (
               <MatchRow key={match.id} match={match} onEdit={onEdit} onDelete={onDelete} />
             ))}

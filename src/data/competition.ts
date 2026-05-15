@@ -1,3 +1,4 @@
+// Teams grouped by competition for the manual match form dropdowns.
 export const teamsByCompetition = {
     'Brasileirao': [
         'Athletico Paranaense',
@@ -67,4 +68,5 @@ export const teamsByCompetition = {
     ]
 } as const;
 
+// Flat competition list used by dropdowns and datalist controls.
 export const competitions = Object.keys(teamsByCompetition);

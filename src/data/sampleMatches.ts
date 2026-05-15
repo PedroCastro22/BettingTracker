@@ -1,6 +1,8 @@
 import type { Match } from '../types';
 
+// Seed data shown on first load before the user has saved local matches.
 export const sampleMatches: Match[] = [
+  // Completed sample with all predicted and actual stats available.
   {
     id: 'sample-1',
     date: '2026-04-20',
@@ -18,6 +20,7 @@ export const sampleMatches: Match[] = [
     actualShotsOnTarget: 8,
     notes: 'Clean read on a controlled derby tempo.',
   },
+  // Completed sample where the exact score missed but stat lines can still be evaluated.
   {
     id: 'sample-2',
     date: '2026-04-18',
@@ -34,6 +37,7 @@ export const sampleMatches: Match[] = [
     actualTotalShots: 29,
     actualShotsOnTarget: 11,
   },
+  // Completed La Liga sample to demonstrate competition filtering.
   {
     id: 'sample-3',
     date: '2026-04-16',
@@ -50,6 +54,7 @@ export const sampleMatches: Match[] = [
     actualTotalShots: 31,
     actualShotsOnTarget: 9,
   },
+  // Pending sample keeps actual fields empty to show pending result badges.
   {
     id: 'sample-4',
     date: '2026-04-24',

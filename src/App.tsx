@@ -5,10 +5,12 @@ import { Filters } from './components/Filters';
 import { JsonMatchesEditor } from './components/JsonMatchesEditor';
 import { MatchForm } from './components/MatchForm';
 import { MatchTable } from './components/MatchTable';
-import { loadMatches, saveMatches } from './storage';
-import type { Match, MatchFilters } from './types';
+import { OptaStatsTab } from './components/OptaStatsTab';
+import { loadMatches, loadOptaStats, saveMatches, saveOptaStats } from './storage';
+import type { Match, MatchFilters, OptaTeamStats } from './types';
 import { calculateMatchResults } from './utils/predictions';
 
+// Default filter state for the match tracker tab.
 const defaultFilters: MatchFilters = {
   competition: '',
   teamName: '',
@@ -16,15 +18,25 @@ const defaultFilters: MatchFilters = {
 };
 
 export function App() {
+  // Top-level app state is kept here so both tabs can read or update saved predictions.
   const [matches, setMatches] = useState<Match[]>(() => loadMatches());
+  const [optaStats, setOptaStats] = useState<OptaTeamStats[]>(() => loadOptaStats());
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
   const [filters, setFilters] = useState<MatchFilters>(defaultFilters);
+  const [activeTab, setActiveTab] = useState<'tracker' | 'opta'>('tracker');
 
+  // Persist match tracker rows whenever the user adds, edits, deletes, or imports matches.
   useEffect(() => {
     saveMatches(matches);
   }, [matches]);
 
+  // Persist Opta team stat profiles separately from the match tracker rows.
+  useEffect(() => {
+    saveOptaStats(optaStats);
+  }, [optaStats]);
+
+  // Dashboard cards only use the selected competition filter, not the team or result filters.
   const filteredDashboard = useMemo(() => {
     if (!filters.competition) {
       return matches;
@@ -33,6 +45,7 @@ export function App() {
     return matches.filter((match) => match.competition === filters.competition);
   }, [matches, filters.competition]);
 
+  // Match table rows apply every selected filter, then show newest fixtures first.
   const filteredMatches = useMemo(() => {
     return matches
       .filter((match) => {
@@ -53,6 +66,7 @@ export function App() {
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [matches, filters]);
 
+  // Shared save handler supports both manual form saves and Opta-generated predictions.
   function handleSave(match: Match) {
     setMatches((current) => {
       const existing = current.some((item) => item.id === match.id);
@@ -61,6 +75,7 @@ export function App() {
     setEditingMatch(null);
   }
 
+  // Removing a match also clears the edit form if that same match was being edited.
   function handleDelete(id: string) {
     setMatches((current) => current.filter((match) => match.id !== id));
     if (editingMatch?.id === id) {
@@ -70,6 +85,7 @@ export function App() {
 
   return (
     <main className="app-shell">
+      {/* App header keeps the global JSON editor available regardless of active tab. */}
       <header className="app-header">
         <div>
           <span className="eyebrow">
@@ -85,16 +101,45 @@ export function App() {
         </button>
       </header>
 
-      <Dashboard matches={filteredDashboard} competition={filters.competition} />
+      {/* Two-tab navigation preserves the original tracker while adding the Opta workflow. */}
+      <nav className="tabs" aria-label="App views">
+        <button
+          type="button"
+          className={activeTab === 'tracker' ? 'tab-button active' : 'tab-button'}
+          onClick={() => setActiveTab('tracker')}
+        >
+          Match Tracker
+        </button>
+        <button
+          type="button"
+          className={activeTab === 'opta' ? 'tab-button active' : 'tab-button'}
+          onClick={() => setActiveTab('opta')}
+        >
+          Opta Stats
+        </button>
+      </nav>
 
-      <div className="content-grid">
-        <MatchForm editingMatch={editingMatch} onSave={handleSave} onCancelEdit={() => setEditingMatch(null)} />
-        <div className="list-panel">
-          <Filters filters={filters} matches={matches} onChange={setFilters} />
-          <MatchTable matches={filteredMatches} onEdit={setEditingMatch} onDelete={handleDelete} />
+      {/* Tracker tab is the original dashboard, form, filters, and results table. */}
+      {activeTab === 'tracker' ? (
+        <>
+          <Dashboard matches={filteredDashboard} competition={filters.competition} />
+
+          <div className="content-grid">
+            <MatchForm editingMatch={editingMatch} onSave={handleSave} onCancelEdit={() => setEditingMatch(null)} />
+            <div className="list-panel">
+              <Filters filters={filters} matches={matches} onChange={setFilters} />
+              <MatchTable matches={filteredMatches} onEdit={setEditingMatch} onDelete={handleDelete} />
+            </div>
+          </div>
+        </>
+      ) : (
+        // Opta tab stores reusable team stats and can add generated matches to the tracker.
+        <div className="tab-panel">
+          <OptaStatsTab stats={optaStats} matches={matches} onChange={setOptaStats} onAddMatch={handleSave} />
         </div>
-      </div>
+      )}
 
+      {/* Modal editor lets advanced users import/export all tracked matches as JSON. */}
       <JsonMatchesEditor
         matches={matches}
         open={jsonEditorOpen}

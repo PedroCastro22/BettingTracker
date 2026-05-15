@@ -7,10 +7,12 @@ type FiltersProps = {
 };
 
 export function Filters({ filters, matches, onChange }: FiltersProps) {
+  // Build the competition dropdown from the matches that are actually stored.
   const competitions = Array.from(new Set(matches.map((match) => match.competition).filter(Boolean))).sort();
 
   return (
     <section className="filters" aria-label="Match filters">
+      {/* Competition filter limits both the table and dashboard. */}
       <label>
         Competition
         <select
@@ -26,6 +28,7 @@ export function Filters({ filters, matches, onChange }: FiltersProps) {
         </select>
       </label>
 
+      {/* Team filter searches both home and away team names. */}
       <label>
         Team
         <input
@@ -35,6 +38,7 @@ export function Filters({ filters, matches, onChange }: FiltersProps) {
         />
       </label>
 
+      {/* Combined filter shows all rows or only settled wins/losses for selected lines. */}
       <label>
         Combined
         <select value={filters.combined} onChange={(event) => onChange({ ...filters, combined: event.target.value as MatchFilters['combined'] })}>

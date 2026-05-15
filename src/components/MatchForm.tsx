@@ -10,6 +10,7 @@ type MatchFormProps = {
   onCancelEdit: () => void;
 };
 
+// Form state stores numbers as strings so inputs can be empty while the user edits.
 type FormState = {
   date: string;
   competition: string;
@@ -30,6 +31,7 @@ type FormState = {
   notes: string;
 };
 
+// Defaults create a ready-to-use new-match form with common prediction line values.
 const emptyState: FormState = {
   date: new Date().toISOString().slice(0, 10),
   competition: '',
@@ -50,10 +52,12 @@ const emptyState: FormState = {
   notes: '',
 };
 
+// Empty actual-stat fields remain undefined until the result is known.
 function numberOrUndefined(value: string): number | undefined {
   return value.trim() === '' ? undefined : Number(value);
 }
 
+// Required predicted score fields fall back to zero if left blank.
 function numberOrZero(value: string): number {
   return value.trim() === '' ? 0 : Number(value);
 }
@@ -61,6 +65,7 @@ function numberOrZero(value: string): number {
 export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps) {
   const [form, setForm] = useState<FormState>(emptyState);
 
+  // Populate the form when editing, or reset it when switching back to add mode.
   useEffect(() => {
     if (!editingMatch) {
       setForm(emptyState);
@@ -89,10 +94,12 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
     });
   }, [editingMatch]);
 
+  // Small field updater keeps input handlers short and consistent.
   function update(field: keyof FormState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  // Changing competition clears teams so a stale team is not kept from another league.
   function updateCompetition(competition: string) {
     setForm((current) => ({
       ...current,
@@ -103,6 +110,7 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
   }
 
 
+  // Convert input strings into the Match shape and pass it back to the app.
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
@@ -127,12 +135,14 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
     setForm(emptyState);
   }
 
+  // Team dropdown options depend on the selected competition.
   const availableTeams = form.competition
   ? teamsByCompetition[form.competition as keyof typeof teamsByCompetition]
   : [];
 
   return (
     <form className="match-form" onSubmit={handleSubmit}>
+      {/* Form header switches labels depending on add or edit mode. */}
       <div className="form-header">
         <div>
           <h2>{editingMatch ? 'Edit match' : 'Add match'}</h2>
@@ -145,6 +155,7 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
         ) : null}
       </div>
 
+      {/* Fixture identity and predicted score fields. */}
       <div className="form-grid">
         <label>
           Date
@@ -193,12 +204,14 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
         </label>
       </div>
 
+      {/* Optional over/under prediction lines tracked against final stats. */}
       <div className="line-grid">
         <LineInput title="Goal line" direction={form.goalDirection} value={form.goalValue} onDirection={(value) => update('goalDirection', value)} onValue={(value) => update('goalValue', value)} />
         <LineInput title="Shots line" direction={form.shotsDirection} value={form.shotsValue} onDirection={(value) => update('shotsDirection', value)} onValue={(value) => update('shotsValue', value)} />
         <LineInput title="SoT line" direction={form.sotDirection} value={form.sotValue} onDirection={(value) => update('sotDirection', value)} onValue={(value) => update('sotValue', value)} />
       </div>
 
+      {/* Optional actual result fields drive dashboard accuracy after a match finishes. */}
       <div className="form-grid">
         <label>
           Actual home goals
@@ -218,6 +231,7 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
         </label>
       </div>
 
+      {/* Free-form notes are stored on the match but do not affect calculations. */}
       <label>
         Notes
         <textarea value={form.notes} onChange={(event) => update('notes', event.target.value)} rows={3} />
@@ -231,6 +245,7 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
   );
 }
 
+// Reusable mini-control for each over/under prediction line.
 function LineInput({
   title,
   direction,
