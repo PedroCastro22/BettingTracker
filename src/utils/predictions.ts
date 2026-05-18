@@ -143,6 +143,13 @@ function suggestedHalfLine(projection: number): PredictionLine {
   };
 }
 
+// Goal-line suggestions are intentionally limited to these two betting options.
+function suggestedGoalLine(totalXg: number): PredictionLine {
+  return totalXg < 2.5
+    ? { direction: 'under', value: 2.5 }
+    : { direction: 'over', value: 1.5 };
+}
+
 // Generate all match prediction values from home and away Opta team profiles.
 export function calculateOptaMatchPrediction(home: OptaTeamStats, away: OptaTeamStats): OptaMatchPrediction {
   // Team goals use attacking quality against the opponent's defensive concessions.
@@ -151,13 +158,13 @@ export function calculateOptaMatchPrediction(home: OptaTeamStats, away: OptaTeam
     if (xg < 0.75) return 0;
 
     // Weak but capable of scoring
-    if (xg < 1.25) return 1;
+    if (xg < 1.45) return 1;
 
     // Strong chance of scoring 2
-    if (xg < 1.9) return 2;
+    if (xg < 2.05) return 2;
 
     // Elite attacking projection
-    if (xg < 2.6) return 3;
+    if (xg < 2.75) return 3;
 
     // Chaos / elite mismatch games
     return 4;
@@ -217,7 +224,7 @@ export function calculateOptaMatchPrediction(home: OptaTeamStats, away: OptaTeam
     predictedTotalGoals,
     predictedTotalShots,
     predictedShotsOnTarget,
-    predictedTotalGoalsLine: suggestedHalfLine(predictedTotalGoals),
+    predictedTotalGoalsLine: suggestedGoalLine(totalXG),
     predictedTotalShotsLine: suggestedHalfLine(predictedTotalShots),
     predictedShotsOnTargetLine: suggestedHalfLine(predictedShotsOnTarget),
   };

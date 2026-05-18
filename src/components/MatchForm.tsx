@@ -267,7 +267,7 @@ function LineInput({
         <option value="over">Over</option>
         <option value="under">Under</option>
       </select>
-      <input step="0.5" type="number" value={value} onChange={(event) => onValue(event.target.value)} />
+      <input step="1.0" type="number" value={value} onChange={(event) => onValue(event.target.value)} />
     </fieldset>
   );
 }
