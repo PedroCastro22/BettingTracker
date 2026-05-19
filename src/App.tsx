@@ -7,7 +7,7 @@ import { MatchForm } from './components/MatchForm';
 import { MatchTable } from './components/MatchTable';
 import { OptaStatsTab } from './components/OptaStatsTab';
 import { loadMatches, loadOptaStats, saveMatches, saveOptaStats } from './storage';
-import type { Match, MatchFilters, OptaTeamStats } from './types';
+import type { Match, MatchFilters, OptaStatsByCompetition } from './types';
 import { calculateMatchResults } from './utils/predictions';
 
 // Default filter state for the match tracker tab.
@@ -20,7 +20,7 @@ const defaultFilters: MatchFilters = {
 export function App() {
   // Top-level app state is kept here so both tabs can read or update saved predictions.
   const [matches, setMatches] = useState<Match[]>(() => loadMatches());
-  const [optaStats, setOptaStats] = useState<OptaTeamStats[]>(() => loadOptaStats());
+  const [optaStats, setOptaStats] = useState<OptaStatsByCompetition>(() => loadOptaStats());
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
   const [filters, setFilters] = useState<MatchFilters>(defaultFilters);
@@ -135,7 +135,7 @@ export function App() {
       ) : (
         // Opta tab stores reusable team stats and can add generated matches to the tracker.
         <div className="tab-panel">
-          <OptaStatsTab stats={optaStats} matches={matches} onChange={setOptaStats} onAddMatch={handleSave} />
+          <OptaStatsTab statsByCompetition={optaStats} matches={matches} onChange={setOptaStats} onAddMatch={handleSave} />
         </div>
       )}
 

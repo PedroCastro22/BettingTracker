@@ -1,18 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Braces, Calculator, Plus, Save, Trash2 } from 'lucide-react';
-import type { Match, OptaMetricSet, OptaTeamStats } from '../types';
-import { competitions } from '../data/competition';
+import type { Match, OptaCompetitionStats, OptaMetricSet, OptaStatsByCompetition, OptaTeamStats } from '../types';
+import { competitions, teamsByCompetition } from '../data/competition';
 import { calculateOptaMatchPrediction, formatLine } from '../utils/predictions';
+import { formatOptaStatsStorageKey } from '../storage';
 
 type OptaStatsTabProps = {
-  stats: OptaTeamStats[];
+  statsByCompetition: OptaStatsByCompetition;
   matches: Match[];
-  onChange: (stats: OptaTeamStats[]) => void;
+  onChange: (statsByCompetition: OptaStatsByCompetition) => void;
   onAddMatch: (match: Match) => void;
 };
 
 // MetricKey lets table inputs update any numeric field in an Opta metric set.
 type MetricKey = keyof OptaMetricSet;
+type OptaStatsMode = 'attacking' | 'defending';
 
 // Shared column definition for both attacking and defending Opta tables.
 const metricKeys: Array<{ key: MetricKey; label: string; step: string }> = [
@@ -36,13 +38,16 @@ type RecentTeamAverages = {
 };
 
 // Example payload gives the JSON loader a visible template to edit or replace.
-const exampleJson = `[
-  {
-    "team": "Barcelona",
-    "attacking": { "avgXg": 2.34, "goalsVsXg": 0.19, "avgShots": 18.5, "avgShotsOnTarget": 6.78 },
-    "defending": { "avgXg": 1.03, "goalsVsXg": -0.08, "avgShots": 10.7, "avgShotsOnTarget": 3.6 }
-  }
-]`;
+const exampleJson = `{
+  "competition": "La Liga",
+  "teams": [
+    {
+      "team": "Barcelona",
+      "attacking": { "avgXg": 2.34, "goalsVsXg": 0.19, "avgShots": 18.5, "avgShotsOnTarget": 6.78 },
+      "defending": { "avgXg": 1.03, "goalsVsXg": -0.08, "avgShots": 10.7, "avgShotsOnTarget": 3.6 }
+    }
+  ]
+}`;
 
 // Convert flexible pasted values into numbers while treating invalid values as zero.
 function toNumber(value: unknown, fallback = 0): number {
@@ -160,15 +165,34 @@ function normalizeStatsEntry(value: unknown, index: number): OptaTeamStats {
   };
 }
 
-// Parse the JSON textarea into a full Opta stats table.
-function parseOptaStatsJson(value: string): OptaTeamStats[] {
+// Parse the JSON textarea into one competition-scoped Opta stats payload.
+function parseOptaStatsJson(value: string): OptaCompetitionStats {
   const parsed = JSON.parse(value) as unknown;
 
-  if (!Array.isArray(parsed)) {
-    throw new Error('JSON must be an array of team stat objects.');
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('JSON must be an object with competition and teams fields.');
   }
 
-  return parsed.map(normalizeStatsEntry);
+  const item = parsed as Record<string, unknown>;
+  const competition = typeof item.competition === 'string' ? item.competition.trim() : '';
+
+  if (!competition) {
+    throw new Error('JSON needs a competition field.');
+  }
+
+  if (!Array.isArray(item.teams)) {
+    throw new Error('JSON needs a teams array.');
+  }
+
+  return {
+    competition,
+    teams: item.teams.map(normalizeStatsEntry),
+  };
+}
+
+// Format the current competition payload so the textarea doubles as import and export.
+function formatCompetitionStatsJson(payload: OptaCompetitionStats): string {
+  return JSON.stringify(payload, null, 2);
 }
 
 // Empty numeric fields display as blank instead of showing a wall of zeros in new rows.
@@ -226,36 +250,76 @@ function calculateRecentTeamAverages(matches: Match[], teamName: string): Recent
   };
 }
 
-export function OptaStatsTab({ stats, matches, onChange, onAddMatch }: OptaStatsTabProps) {
+export function OptaStatsTab({ statsByCompetition, matches, onChange, onAddMatch }: OptaStatsTabProps) {
   // Local UI state controls the JSON input and the fixture currently being generated.
   const [jsonValue, setJsonValue] = useState(exampleJson);
   const [jsonError, setJsonError] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [competition, setCompetition] = useState('Opta model');
+  const [competition, setCompetition] = useState(competitions[0] ?? '');
+  const [statsMode, setStatsMode] = useState<OptaStatsMode>('attacking');
   const [homeTeamId, setHomeTeamId] = useState('');
   const [awayTeamId, setAwayTeamId] = useState('');
 
+  // Each competition tab reads only its own saved JSON payload.
+  const currentPayload = useMemo(
+    () => statsByCompetition[competition] ?? { competition, teams: [] },
+    [competition, statsByCompetition],
+  );
+  const stats = currentPayload.teams;
+  const competitionTeams = competition
+    ? teamsByCompetition[competition as keyof typeof teamsByCompetition] ?? []
+    : [];
+  const competitionMatches = useMemo(() => {
+    return competition ? matches.filter((match) => match.competition === competition) : matches;
+  }, [competition, matches]);
   // Keep dropdowns alphabetical without mutating the parent stats array.
   const sortedStats = useMemo(() => [...stats].sort((a, b) => a.team.localeCompare(b.team)), [stats]);
   const recentAverages = useMemo(() => {
-    return Object.fromEntries(stats.map((team) => [team.id, calculateRecentTeamAverages(matches, team.team)]));
-  }, [matches, stats]);
+    return Object.fromEntries(stats.map((team) => [team.id, calculateRecentTeamAverages(competitionMatches, team.team)]));
+  }, [competitionMatches, stats]);
   const homeStats = stats.find((team) => team.id === homeTeamId);
   const awayStats = stats.find((team) => team.id === awayTeamId);
+  const statsModeLabels: Record<OptaStatsMode, { title: string; caption: string }> = {
+    attacking: {
+      title: 'Attacking',
+      caption: 'Per-match team attacking output',
+    },
+    defending: {
+      title: 'Defending',
+      caption: 'All defensive stats are against/faced',
+    },
+  };
 
   // Prediction appears only when two different teams have complete row identities.
   const prediction = homeStats && awayStats && homeStats.id !== awayStats.id
     ? calculateOptaMatchPrediction(homeStats, awayStats)
     : null;
 
+  useEffect(() => {
+    // When the competition changes, show the JSON saved for that exact competition key.
+    setJsonValue(formatCompetitionStatsJson(currentPayload));
+    setJsonError('');
+  }, [competition, currentPayload]);
+
+  function saveCompetitionStats(nextStats: OptaTeamStats[], targetCompetition = competition) {
+    // Updating one competition leaves every other competition payload untouched.
+    onChange({
+      ...statsByCompetition,
+      [targetCompetition]: {
+        competition: targetCompetition,
+        teams: nextStats,
+      },
+    });
+  }
+
   // Update a team's name from the attacking table, where the editable name input lives.
   function updateTeam(id: string, team: string) {
-    onChange(stats.map((item) => (item.id === id ? { ...item, team } : item)));
+    saveCompetitionStats(stats.map((item) => (item.id === id ? { ...item, team } : item)));
   }
 
   // Update one numeric metric inside either attacking or defending stats.
   function updateMetric(id: string, section: 'attacking' | 'defending', key: MetricKey, value: string) {
-    onChange(
+    saveCompetitionStats(
       stats.map((item) =>
         item.id === id
           ? {
@@ -272,19 +336,20 @@ export function OptaStatsTab({ stats, matches, onChange, onAddMatch }: OptaStats
 
   // Add a blank team row with both attacking and defending metric sections.
   function addTeam() {
+    const usedTeams = new Set(stats.map((team) => normalizeTeamName(team.team)).filter(Boolean));
     const nextTeam: OptaTeamStats = {
       id: crypto.randomUUID(),
-      team: '',
+      team: competitionTeams.find((team) => !usedTeams.has(normalizeTeamName(team))) ?? '',
       attacking: { ...emptyMetrics },
       defending: { ...emptyMetrics },
     };
 
-    onChange([...stats, nextTeam]);
+    saveCompetitionStats([...stats, nextTeam]);
   }
 
   // Remove a team and clear fixture selections that pointed at it.
   function removeTeam(id: string) {
-    onChange(stats.filter((team) => team.id !== id));
+    saveCompetitionStats(stats.filter((team) => team.id !== id));
     if (homeTeamId === id) {
       setHomeTeamId('');
     }
@@ -293,11 +358,28 @@ export function OptaStatsTab({ stats, matches, onChange, onAddMatch }: OptaStats
     }
   }
 
+  function updateCompetition(competition: string) {
+    setCompetition(competition);
+    setHomeTeamId('');
+    setAwayTeamId('');
+  }
+
   // Replace the current table with parsed JSON, surfacing validation errors inline.
   function loadJson() {
     try {
-      const nextStats = parseOptaStatsJson(jsonValue);
-      onChange(nextStats);
+      const payload = parseOptaStatsJson(jsonValue);
+      if (!competitions.includes(payload.competition)) {
+        throw new Error(`Competition must match one of: ${competitions.join(', ')}.`);
+      }
+
+      // The JSON's competition field decides which isolated browser key gets updated.
+      onChange({
+        ...statsByCompetition,
+        [payload.competition]: payload,
+      });
+      setCompetition(payload.competition);
+      setHomeTeamId('');
+      setAwayTeamId('');
       setJsonError('');
     } catch (caught) {
       setJsonError(caught instanceof Error ? caught.message : 'The Opta JSON could not be loaded.');
@@ -338,30 +420,47 @@ export function OptaStatsTab({ stats, matches, onChange, onAddMatch }: OptaStats
               </span>
               <h2>Stats input</h2>
             </div>
+            <div className="opta-controls">
+              <label>
+                Competition
+                <select value={competition} onChange={(event) => updateCompetition(event.target.value)}>
+                  {competitions.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="mode-toggle" role="group" aria-label="Opta stat mode">
+                <button
+                  type="button"
+                  className={statsMode === 'attacking' ? 'active' : ''}
+                  onClick={() => setStatsMode('attacking')}
+                >
+                  Attacking
+                </button>
+                <button
+                  type="button"
+                  className={statsMode === 'defending' ? 'active' : ''}
+                  onClick={() => setStatsMode('defending')}
+                >
+                  Defending
+                </button>
+              </div>
+            </div>
             <button type="button" className="secondary-button" onClick={addTeam}>
               <Plus size={18} />
               Add team
             </button>
           </div>
 
-          {/* Attacking table matches the Opta screenshot's attacking stat layout. */}
+          {/* The selected mode renders one Opta table at a time for the current competition. */}
           <StatsTable
-            title="Attacking"
-            caption="Per-match team attacking output"
+            title={statsModeLabels[statsMode].title}
+            caption={statsModeLabels[statsMode].caption}
             stats={stats}
-            section="attacking"
-            recentAverages={recentAverages}
-            onUpdateTeam={updateTeam}
-            onUpdateMetric={updateMetric}
-            onRemove={removeTeam}
-          />
-
-          {/* Defending table mirrors the same columns, with values treated as against/faced. */}
-          <StatsTable
-            title="Defending"
-            caption="All defensive stats are against/faced"
-            stats={stats}
-            section="defending"
+            section={statsMode}
+            competitionTeams={competitionTeams}
             recentAverages={recentAverages}
             onUpdateTeam={updateTeam}
             onUpdateMetric={updateMetric}
@@ -391,6 +490,9 @@ export function OptaStatsTab({ stats, matches, onChange, onAddMatch }: OptaStats
                 setJsonError('');
               }}
             />
+            <p className="storage-key">
+              Saved under <code>{formatOptaStatsStorageKey(competition)}</code>
+            </p>
             {jsonError ? <p className="form-error">{jsonError}</p> : null}
             <button type="button" className="primary-button" onClick={loadJson}>
               <Save size={18} />
@@ -418,16 +520,13 @@ export function OptaStatsTab({ stats, matches, onChange, onAddMatch }: OptaStats
               </label>
               <label>
                 Competition
-                <input
-                  list="opta-competitions"
-                  value={competition}
-                  onChange={(event) => setCompetition(event.target.value)}
-                />
-                <datalist id="opta-competitions">
+                <select value={competition} onChange={(event) => updateCompetition(event.target.value)}>
                   {competitions.map((item) => (
-                    <option key={item} value={item} />
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
                   ))}
-                </datalist>
+                </select>
               </label>
               <label>
                 Home team
@@ -500,6 +599,7 @@ function StatsTable({
   caption,
   stats,
   section,
+  competitionTeams,
   recentAverages,
   onUpdateTeam,
   onUpdateMetric,
@@ -509,6 +609,7 @@ function StatsTable({
   caption: string;
   stats: OptaTeamStats[];
   section: 'attacking' | 'defending';
+  competitionTeams: readonly string[];
   recentAverages: Record<string, RecentTeamAverages>;
   onUpdateTeam: (id: string, team: string) => void;
   onUpdateMetric: (id: string, section: 'attacking' | 'defending', key: MetricKey, value: string) => void;
@@ -553,16 +654,7 @@ function StatsTable({
               <tr key={team.id}>
                 <td>
                   {/* Team name is edited once in the attacking table and shown read-only below. */}
-                  {section === 'attacking' ? (
-                    <input
-                      aria-label="Team"
-                      value={team.team}
-                      onChange={(event) => onUpdateTeam(team.id, event.target.value)}
-                      placeholder="Team name"
-                    />
-                  ) : (
-                    <strong>{team.team || 'Unnamed team'}</strong>
-                  )}
+                  <strong>{team.team || 'Unnamed team'}</strong>
                 </td>
                 {metricKeys.map((metric) => (
                   <td key={metric.key}>
@@ -599,7 +691,7 @@ function StatsTable({
           </tbody>
         </table>
 
-        {stats.length === 0 ? <p className="empty-state">Add a team or load a JSON stat export to begin.</p> : null}
+        {stats.length === 0 ? <p className="empty-state">No Opta stats match the selected competition.</p> : null}
       </div>
     </section>
   );

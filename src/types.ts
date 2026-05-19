@@ -61,6 +61,15 @@ export type OptaTeamStats = {
   defending: OptaMetricSet;
 };
 
+// One competition owns its own Opta JSON payload so imports do not overwrite other leagues.
+export type OptaCompetitionStats = {
+  competition: string;
+  teams: OptaTeamStats[];
+};
+
+// App state keeps one Opta JSON payload per competition name.
+export type OptaStatsByCompetition = Record<string, OptaCompetitionStats>;
+
 // Prediction output generated from two Opta profiles by the blended model.
 export type OptaMatchPrediction = {
   homeTeam: string;

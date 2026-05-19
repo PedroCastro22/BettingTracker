@@ -460,6 +460,39 @@ td small {
   padding: 16px;
 }
 
+/* Opta controls keep competition scope and stat mode beside the table actions. */
+.opta-controls {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(180px, 220px) auto;
+}
+
+/* Mode switch shows one active Opta stat section at a time. */
+.mode-toggle {
+  background: #eef3f7;
+  border: 1px solid #ccd6e0;
+  border-radius: 6px;
+  display: inline-flex;
+  min-height: 42px;
+  padding: 3px;
+}
+
+.mode-toggle button {
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #526173;
+  font-weight: 900;
+  padding: 0 12px;
+}
+
+.mode-toggle button.active {
+  background: #ffffff;
+  color: #19624f;
+  box-shadow: 0 1px 3px rgba(18, 25, 35, 0.12);
+}
+
 /* Opta panel titles sit close to their eyebrow labels. */
 .opta-toolbar h2,
 .opta-panel h2 {
@@ -538,6 +571,19 @@ td small {
 /* JSON editor in the Opta side panel is shorter than the full match JSON modal. */
 .opta-json {
   min-height: 260px;
+}
+
+/* Storage hint shows which competition-specific browser key the JSON updates. */
+.storage-key {
+  color: #617083;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  margin: -4px 0 0;
+}
+
+.storage-key code {
+  color: #304052;
+  font-weight: 800;
 }
 
 /* Utility class for panel forms that should stack as one column. */
@@ -681,6 +727,7 @@ td small {
   .form-grid,
   .line-grid,
   .filters,
+  .opta-controls,
   .opta-toolbar {
     grid-template-columns: 1fr;
   }
