@@ -8,6 +8,7 @@ type MatchRowProps = {
   onDelete: (id: string) => void;
 };
 
+// Badge converts calculation states into short, styled table labels.
 function ResultBadge({ result }: { result: PredictionResult }) {
   const label = {
     win: 'Win',
@@ -20,7 +21,10 @@ function ResultBadge({ result }: { result: PredictionResult }) {
 }
 
 export function MatchRow({ match, onEdit, onDelete }: MatchRowProps) {
+  // Calculate all prediction outcomes before rendering the row badges.
   const results = calculateMatchResults(match);
+
+  // Actual score is blank until both final goals have been entered.
   const actualScore =
     match.actualHomeGoals === undefined || match.actualAwayGoals === undefined
       ? '-'
@@ -28,6 +32,7 @@ export function MatchRow({ match, onEdit, onDelete }: MatchRowProps) {
 
   return (
     <tr>
+      {/* Match cell combines fixture identity, date, and competition. */}
       <td>
         <strong>{match.homeTeam}</strong>
         <span className="muted"> vs {match.awayTeam}</span>
@@ -35,21 +40,26 @@ export function MatchRow({ match, onEdit, onDelete }: MatchRowProps) {
       </td>
       <td>{match.predictedHomeGoals}-{match.predictedAwayGoals}</td>
       <td>{actualScore}</td>
+      {/* Each stat line shows the prediction and the calculated result badge. */}
       <td>
-        {formatLine(match.predictedTotalGoalsLine)}
+        <span className="prediction-line">{formatLine(match.predictedTotalGoalsLine)}</span>
+        <br />
         <ResultBadge result={results.goals} />
       </td>
       <td>
-        {formatLine(match.predictedTotalShotsLine)}
+        <span className="prediction-line">{formatLine(match.predictedTotalShotsLine)}</span>
+        <small className="muted"> Actual: {match.actualTotalShots}</small>
         <ResultBadge result={results.totalShots} />
       </td>
       <td>
-        {formatLine(match.predictedShotsOnTargetLine)}
+        <span className="prediction-line">{formatLine(match.predictedShotsOnTargetLine)}</span>
+        <small className="muted"> Actual: {match.actualShotsOnTarget}</small>
         <ResultBadge result={results.shotsOnTarget} />
       </td>
       <td>
         <ResultBadge result={results.combined} />
       </td>
+      {/* Row actions hand the selected match back to App for editing or deletion. */}
       <td className="actions">
         <button className="icon-button" onClick={() => onEdit(match)} aria-label={`Edit ${match.homeTeam} vs ${match.awayTeam}`} title="Edit">
           <Edit2 size={17} />

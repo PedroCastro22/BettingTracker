@@ -1,3 +1,4 @@
+/* Global theme tokens and font defaults for the whole app. */
 :root {
   color: #1d2433;
   background: #f5f7fb;
@@ -7,15 +8,18 @@
   text-rendering: optimizeLegibility;
 }
 
+/* Border-box sizing makes form and table widths easier to reason about. */
 * {
   box-sizing: border-box;
 }
 
+/* Body reset removes browser margin while keeping a usable minimum viewport width. */
 body {
   margin: 0;
   min-width: 320px;
 }
 
+/* Form controls inherit the same typography as the rest of the app. */
 button,
 input,
 select,
@@ -23,16 +27,19 @@ textarea {
   font: inherit;
 }
 
+/* Buttons are interactive controls, so they all use a pointer cursor. */
 button {
   cursor: pointer;
 }
 
+/* Main app container constrains wide screens and adds page spacing. */
 .app-shell {
   width: min(1480px, calc(100% - 32px));
   margin: 0 auto;
   padding: 28px 0 40px;
 }
 
+/* Header layout keeps the title and global JSON action aligned. */
 .app-header {
   display: flex;
   align-items: flex-end;
@@ -41,6 +48,7 @@ button {
   margin-bottom: 22px;
 }
 
+/* Shared heading reset prevents inconsistent browser margins. */
 .app-header h1,
 .form-header h2,
 .section-heading h2 {
@@ -48,18 +56,21 @@ button {
   letter-spacing: 0;
 }
 
+/* App title scales between mobile and desktop without viewport-based text sizing. */
 .app-header h1 {
   margin-top: 8px;
   font-size: clamp(2rem, 4vw, 3.8rem);
   line-height: 1;
 }
 
+/* Supporting copy uses muted color so primary controls and numbers stand out. */
 .app-header p,
 .form-header p {
   color: #617083;
   margin: 10px 0 0;
 }
 
+/* Eyebrow labels combine icons with short section context. */
 .eyebrow {
   align-items: center;
   color: #19624f;
@@ -70,10 +81,12 @@ button {
   text-transform: uppercase;
 }
 
+/* Dashboard wrapper spacing separates accuracy cards from the tab navigation. */
 .dashboard-section {
   margin-bottom: 18px;
 }
 
+/* Dashboard heading pairs current competition scope with a stat label. */
 .dashboard-heading {
   align-items: end;
   display: flex;
@@ -82,11 +95,13 @@ button {
   margin-bottom: 10px;
 }
 
+/* Dashboard title stays compact because card values carry the visual weight. */
 .dashboard-heading h2 {
   margin: 0;
   font-size: 1.1rem;
 }
 
+/* Dashboard caption follows the app's uppercase metadata style. */
 .dashboard-heading span {
   color: #617083;
   font-size: 0.78rem;
@@ -94,12 +109,14 @@ button {
   text-transform: uppercase;
 }
 
+/* Six-column stat grid shows all tracker accuracy categories on wide screens. */
 .dashboard {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
+/* Individual stat cards hold a label, large value, and win/settled detail. */
 .stat-card {
   background: #ffffff;
   border: 1px solid #dfe6ee;
@@ -108,6 +125,7 @@ button {
   padding: 16px;
 }
 
+/* Shared uppercase label styling for cards, labels, field legends, and table headers. */
 .stat-card span,
 label,
 .line-input legend,
@@ -118,16 +136,19 @@ th {
   text-transform: uppercase;
 }
 
+/* Stat card value is the main dashboard readout. */
 .stat-card strong {
   display: block;
   font-size: 2rem;
   margin-top: 12px;
 }
 
+/* Stat card details and muted table text use the same secondary color. */
 .stat-card small {
   color: #617083;
 }
 
+/* Main tracker layout pairs the form with the filtered match list. */
 .content-grid {
   align-items: start;
   display: grid;
@@ -135,6 +156,7 @@ th {
   grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
 }
 
+/* White panels establish the app's repeated form/list surfaces. */
 .match-form,
 .list-panel {
   background: #ffffff;
@@ -142,6 +164,7 @@ th {
   border-radius: 8px;
 }
 
+/* Match form stays visible on desktop while scrolling the match table. */
 .match-form {
   display: grid;
   gap: 16px;
@@ -150,6 +173,7 @@ th {
   top: 18px;
 }
 
+/* Header rows align titles with optional icon actions. */
 .form-header,
 .section-heading {
   align-items: center;
@@ -158,6 +182,7 @@ th {
   gap: 16px;
 }
 
+/* Reusable grid primitives for form fields, prediction line controls, and filters. */
 .form-grid,
 .line-grid,
 .filters {
@@ -165,19 +190,23 @@ th {
   gap: 12px;
 }
 
+/* Two-column form sections keep fixture fields compact. */
 .form-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* Three prediction line controls fit beside each other on desktop. */
 .line-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* Labels wrap their text and input with consistent spacing. */
 label {
   display: grid;
   gap: 7px;
 }
 
+/* Shared text field styling across forms, filters, and JSON editors. */
 input,
 select,
 textarea {
@@ -190,10 +219,12 @@ textarea {
   width: 100%;
 }
 
+/* Textareas are vertically resizable for notes and JSON editing. */
 textarea {
   resize: vertical;
 }
 
+/* Fieldset styling gives each prediction line its own compact boundary. */
 .line-input {
   border: 1px solid #dfe6ee;
   border-radius: 8px;
@@ -204,6 +235,7 @@ textarea {
   padding: 10px;
 }
 
+/* Button primitives share centered icon/text alignment. */
 .primary-button,
 .secondary-button,
 .icon-button {
@@ -213,6 +245,7 @@ textarea {
   justify-content: center;
 }
 
+/* Primary action button used for saving and loading important changes. */
 .primary-button {
   background: #19624f;
   border-radius: 6px;
@@ -223,6 +256,7 @@ textarea {
   padding: 0 16px;
 }
 
+/* Secondary action button is used for neutral actions such as editing JSON. */
 .secondary-button {
   background: #eef3f7;
   border: 1px solid #ccd6e0;
@@ -234,10 +268,45 @@ textarea {
   padding: 0 16px;
 }
 
+/* Header action should not shrink when the title area grows. */
 .header-action {
   flex: 0 0 auto;
 }
 
+/* Tab bar switches between the original tracker and the Opta stats workflow. */
+.tabs {
+  align-items: center;
+  border-bottom: 1px solid #d7e0e9;
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+/* Inactive tab buttons sit on the same baseline without a filled background. */
+.tab-button {
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: #526173;
+  font-weight: 900;
+  min-height: 44px;
+  padding: 0 16px;
+  text-transform: uppercase;
+}
+
+/* Active tab gets a clear underline and stronger text color. */
+.tab-button.active {
+  border-color: #19624f;
+  color: #1d2433;
+}
+
+/* Tab panel wrapper gives the selected tab's content consistent spacing. */
+.tab-panel {
+  display: grid;
+  gap: 18px;
+}
+
+/* Square icon-only buttons are used for edit, delete, close, and cancel actions. */
 .icon-button {
   background: #eef3f7;
   border-radius: 6px;
@@ -246,41 +315,49 @@ textarea {
   width: 36px;
 }
 
+/* Destructive icon buttons use a warning color treatment. */
 .icon-button.danger {
   background: #fff0ef;
   color: #a2342a;
 }
 
+/* Filter bar spans the top of the tracker list panel. */
 .filters {
   border-bottom: 1px solid #dfe6ee;
   grid-template-columns: 1fr 1fr 190px;
   padding: 16px;
 }
 
+/* Table sections share padding inside their white panels. */
 .table-section {
   padding: 16px;
 }
 
+/* Section headings have a small gap before the table or panel body. */
 .section-heading {
   margin-bottom: 12px;
 }
 
+/* Muted text style for secondary labels in headings and table rows. */
 .section-heading span,
 .muted,
 td small {
   color: #617083;
 }
 
+/* Table wrapper allows horizontal scrolling for stat-heavy views. */
 .table-wrap {
   overflow-x: auto;
 }
 
+/* Base table layout used by tracker and Opta stats tables. */
 table {
   border-collapse: collapse;
   min-width: 940px;
   width: 100%;
 }
 
+/* Cell padding and borders create dense but readable tabular rows. */
 th,
 td {
   border-bottom: 1px solid #edf1f5;
@@ -289,15 +366,18 @@ td {
   vertical-align: middle;
 }
 
+/* First column is wider because it usually contains team or fixture identity. */
 td:first-child {
   min-width: 220px;
 }
 
+/* Small text in table rows appears below primary fixture text. */
 td small {
   display: block;
   margin-top: 4px;
 }
 
+/* Result badges provide compact win/loss/pending feedback in rows. */
 .result-badge {
   border-radius: 999px;
   display: inline-flex;
@@ -310,36 +390,252 @@ td small {
   text-transform: uppercase;
 }
 
+/* Successful prediction badge. */
 .result-badge.win {
   background: #dff5e8;
   color: #17613a;
 }
 
+/* Missed prediction badge. */
 .result-badge.loss {
   background: #fde3df;
   color: #9a2d23;
 }
 
+/* Pending prediction badge for matches without final stats. */
 .result-badge.pending {
   background: #fff2c8;
   color: #725312;
 }
 
+/* Not-selected badge for prediction lines the user skipped. */
 .result-badge.not-selected {
   background: #edf1f5;
   color: #617083;
 }
 
+/* Row action buttons sit side by side. */
 .actions {
   display: flex;
   gap: 8px;
 }
 
+/* Empty-state copy explains why a table or generated result is blank. */
 .empty-state {
   color: #617083;
   margin: 18px 0 0;
 }
 
+/* Opta page layout puts tables beside the JSON and prediction side panels. */
+.opta-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 430px);
+}
+
+/* Opta columns stack their internal panels with the same spacing. */
+.opta-main,
+.opta-side {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+/* Opta surfaces use the same white-panel treatment as tracker panels. */
+.opta-toolbar,
+.opta-table-panel,
+.opta-panel {
+  background: #ffffff;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+}
+
+/* Opta toolbar aligns the section title with the add-team action. */
+.opta-toolbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* Opta controls keep competition scope and stat mode beside the table actions. */
+.opta-controls {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(180px, 220px) auto;
+}
+
+/* Mode switch shows one active Opta stat section at a time. */
+.mode-toggle {
+  background: #eef3f7;
+  border: 1px solid #ccd6e0;
+  border-radius: 6px;
+  display: inline-flex;
+  min-height: 42px;
+  padding: 3px;
+}
+
+.mode-toggle button {
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #526173;
+  font-weight: 900;
+  padding: 0 12px;
+}
+
+.mode-toggle button.active {
+  background: #ffffff;
+  color: #19624f;
+  box-shadow: 0 1px 3px rgba(18, 25, 35, 0.12);
+}
+
+/* Opta panel titles sit close to their eyebrow labels. */
+.opta-toolbar h2,
+.opta-panel h2 {
+  margin: 6px 0 0;
+}
+
+/* Opta panels get inner padding because their border belongs to the panel itself. */
+.opta-table-panel,
+.opta-panel {
+  min-width: 0;
+  padding: 16px;
+}
+
+/* Opta tables need extra width for imported metrics, tracker averages, and actions. */
+.opta-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.opta-team-col {
+  width: 22%;
+}
+
+.opta-metric-col {
+  width: 13%;
+}
+
+.opta-recent-col {
+  width: 9.5%;
+}
+
+.opta-action-col {
+  width: 7%;
+}
+
+.recent-form-table .opta-team-col {
+  width: 52%;
+}
+
+.recent-form-table .opta-recent-col {
+  width: 24%;
+}
+
+/* Darker header rule echoes the screenshot's table separation. */
+.opta-table th {
+  border-bottom-color: #1d2433;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  padding: 10px 8px;
+}
+
+/* Alternating rows make dense Opta stat entry easier to scan. */
+.opta-table tbody tr:nth-child(even) {
+  background: #f2f4f6;
+}
+
+/* Opta rows rely on banding instead of row divider lines. */
+.opta-table td {
+  border-bottom: 0;
+  padding: 10px 8px;
+}
+
+/* Team column stays wide enough for club names. */
+.opta-table td:first-child {
+  min-width: 0;
+}
+
+/* Opta table inputs sit on white even when the row background is banded. */
+.opta-table input {
+  background: #ffffff;
+  min-height: 38px;
+  min-width: 0;
+  padding: 8px 9px;
+}
+
+/* Last-five tracker averages are read-only values beside the editable Opta metrics. */
+.opta-table .readonly-stat {
+  color: #304052;
+  font-weight: 800;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* JSON editor in the Opta side panel is shorter than the full match JSON modal. */
+.opta-json {
+  min-height: 260px;
+}
+
+/* Storage hint shows which competition-specific browser key the JSON updates. */
+.storage-key {
+  color: #617083;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  margin: -4px 0 0;
+}
+
+.storage-key code {
+  color: #304052;
+  font-weight: 800;
+}
+
+/* Utility class for panel forms that should stack as one column. */
+.single-column {
+  grid-template-columns: 1fr;
+}
+
+/* Generated prediction cards stack projected score and line suggestions. */
+.prediction-output {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+/* Each generated prediction card has a lightly framed readout. */
+.prediction-output div {
+  background: #f8fafc;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+/* Prediction card labels use the same uppercase metadata treatment. */
+.prediction-output span {
+  color: #526173;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+/* Prediction numbers are emphasized for quick scanning. */
+.prediction-output strong {
+  font-size: 1.55rem;
+}
+
+/* Suggested over/under line appears below the raw projected total. */
+.prediction-output small {
+  color: #617083;
+  font-weight: 700;
+}
+
+/* Modal backdrop dims the app behind the JSON editor. */
 .modal-backdrop {
   align-items: center;
   background: rgba(18, 25, 35, 0.54);
@@ -351,6 +647,7 @@ td small {
   z-index: 20;
 }
 
+/* JSON modal is sized for comfortable full-array editing. */
 .json-modal {
   background: #ffffff;
   border: 1px solid #dfe6ee;
@@ -363,6 +660,7 @@ td small {
   width: min(980px, 100%);
 }
 
+/* Modal header and footer keep actions at opposite edges. */
 .modal-header,
 .modal-actions {
   align-items: center;
@@ -371,10 +669,12 @@ td small {
   gap: 16px;
 }
 
+/* Modal title has a small top margin below its eyebrow label. */
 .modal-header h2 {
   margin: 8px 0 0;
 }
 
+/* JSON editor uses a monospace font and preserves whitespace. */
 .json-editor {
   font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
   font-size: 0.88rem;
@@ -384,6 +684,7 @@ td small {
   white-space: pre;
 }
 
+/* Validation errors are styled as inline alert boxes. */
 .form-error {
   background: #fff0ef;
   border: 1px solid #ffc9c2;
@@ -394,12 +695,14 @@ td small {
   padding: 10px 12px;
 }
 
+/* Medium screens collapse wide two-column layouts into one column. */
 @media (max-width: 1180px) {
   .dashboard {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .content-grid {
+  .content-grid,
+  .opta-layout {
     grid-template-columns: 1fr;
   }
 
@@ -408,6 +711,7 @@ td small {
   }
 }
 
+/* Small screens stack header, grids, filters, and tabs for mobile use. */
 @media (max-width: 760px) {
   .app-shell {
     width: min(100% - 20px, 1480px);
@@ -430,7 +734,23 @@ td small {
   .dashboard,
   .form-grid,
   .line-grid,
-  .filters {
+  .filters,
+  .opta-controls,
+  .opta-toolbar {
     grid-template-columns: 1fr;
   }
+
+  .opta-toolbar,
+  .tabs {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .tab-button {
+    text-align: left;
+  }
+}
+
+.prediction-line {
+  white-space: nowrap;
 }

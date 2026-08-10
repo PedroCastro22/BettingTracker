@@ -1,6 +1,8 @@
 import type { Match } from '../types';
 
+// Seed data shown on first load before the user has saved local matches.
 export const sampleMatches: Match[] = [
+  // Completed sample with all predicted and actual stats available.
   {
     id: 'sample-1',
     date: '2026-04-20',
@@ -14,10 +16,15 @@ export const sampleMatches: Match[] = [
     predictedShotsOnTargetLine: { direction: 'under', value: 9.5 },
     actualHomeGoals: 2,
     actualAwayGoals: 1,
-    actualTotalShots: 24,
-    actualShotsOnTarget: 8,
+    actualHomeShots: 14,
+    actualAwayShots: 10,
+    actualHomeShotsOnTarget: 5,
+    actualAwayShotsOnTarget: 3,
+    actualTotalShots: 14 + 10,
+    actualShotsOnTarget: 5 + 3,
     notes: 'Clean read on a controlled derby tempo.',
   },
+  // Completed sample where the exact score missed but stat lines can still be evaluated.
   {
     id: 'sample-2',
     date: '2026-04-18',
@@ -31,9 +38,14 @@ export const sampleMatches: Match[] = [
     predictedShotsOnTargetLine: { direction: 'over', value: 8.5 },
     actualHomeGoals: 2,
     actualAwayGoals: 2,
-    actualTotalShots: 29,
-    actualShotsOnTarget: 11,
+    actualHomeShots: 16,
+    actualAwayShots: 13,
+    actualHomeShotsOnTarget: 6,
+    actualAwayShotsOnTarget: 5,
+    actualTotalShots: 16 + 13,
+    actualShotsOnTarget: 6 + 5,
   },
+  // Completed La Liga sample to demonstrate competition filtering.
   {
     id: 'sample-3',
     date: '2026-04-16',
@@ -47,9 +59,14 @@ export const sampleMatches: Match[] = [
     predictedShotsOnTargetLine: { direction: 'under', value: 10.5 },
     actualHomeGoals: 3,
     actualAwayGoals: 0,
-    actualTotalShots: 31,
-    actualShotsOnTarget: 9,
+    actualHomeShots: 20,
+    actualAwayShots: 11,
+    actualHomeShotsOnTarget: 7,
+    actualAwayShotsOnTarget: 2,
+    actualTotalShots: 20 + 11,
+    actualShotsOnTarget: 7 + 2,
   },
+  // Pending sample keeps actual fields empty to show pending result badges.
   {
     id: 'sample-4',
     date: '2026-04-24',
