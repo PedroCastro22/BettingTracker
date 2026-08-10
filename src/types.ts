@@ -25,6 +25,10 @@ export type Match = {
   notes?: string;
   actualHomeGoals?: number;
   actualAwayGoals?: number;
+  actualHomeShots?: number;
+  actualAwayShots?: number;
+  actualHomeShotsOnTarget?: number;
+  actualAwayShotsOnTarget?: number;
   actualTotalShots?: number;
   actualShotsOnTarget?: number;
 };

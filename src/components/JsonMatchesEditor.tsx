@@ -53,10 +53,35 @@ function normalizeMatch(value: unknown, index: number): Match {
   }
 
   // Optional final stats must be numeric when present so accuracy calculations are reliable.
-  for (const field of ['actualHomeGoals', 'actualAwayGoals', 'actualTotalShots', 'actualShotsOnTarget'] as const) {
+  for (const field of [
+    'actualHomeGoals',
+    'actualAwayGoals',
+    'actualHomeShots',
+    'actualAwayShots',
+    'actualHomeShotsOnTarget',
+    'actualAwayShotsOnTarget',
+    'actualTotalShots',
+    'actualShotsOnTarget',
+  ] as const) {
     if (item[field] !== undefined && (typeof item[field] !== 'number' || Number.isNaN(item[field]))) {
       throw new Error(`Entry ${index + 1} has an invalid "${field}".`);
     }
+  }
+
+  if (
+    item.actualHomeShots !== undefined &&
+    item.actualHomeShotsOnTarget !== undefined &&
+    item.actualHomeShotsOnTarget > item.actualHomeShots
+  ) {
+    throw new Error(`Entry ${index + 1} has more home shots on target than home shots.`);
+  }
+
+  if (
+    item.actualAwayShots !== undefined &&
+    item.actualAwayShotsOnTarget !== undefined &&
+    item.actualAwayShotsOnTarget > item.actualAwayShots
+  ) {
+    throw new Error(`Entry ${index + 1} has more away shots on target than away shots.`);
   }
 
   const date = item.date as string;
@@ -65,6 +90,14 @@ function normalizeMatch(value: unknown, index: number): Match {
   const awayTeam = item.awayTeam as string;
   const predictedHomeGoals = item.predictedHomeGoals as number;
   const predictedAwayGoals = item.predictedAwayGoals as number;
+  const actualTotalShots =
+    item.actualHomeShots !== undefined && item.actualAwayShots !== undefined
+      ? item.actualHomeShots + item.actualAwayShots
+      : item.actualTotalShots;
+  const actualShotsOnTarget =
+    item.actualHomeShotsOnTarget !== undefined && item.actualAwayShotsOnTarget !== undefined
+      ? item.actualHomeShotsOnTarget + item.actualAwayShotsOnTarget
+      : item.actualShotsOnTarget;
 
   // Keep any optional imported fields, but trim user-facing strings and create missing ids.
   return {
@@ -76,6 +109,8 @@ function normalizeMatch(value: unknown, index: number): Match {
     awayTeam: awayTeam.trim(),
     predictedHomeGoals,
     predictedAwayGoals,
+    actualTotalShots,
+    actualShotsOnTarget,
     notes: typeof item.notes === 'string' ? item.notes.trim() : item.notes,
   };
 }

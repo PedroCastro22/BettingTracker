@@ -5,7 +5,7 @@ import { Filters } from './components/Filters';
 import { JsonMatchesEditor } from './components/JsonMatchesEditor';
 import { MatchForm } from './components/MatchForm';
 import { MatchTable } from './components/MatchTable';
-import { OptaStatsTab } from './components/OptaStatsTab';
+import { RecentFormTab } from './components/RecentFormTab';
 import { loadMatches, loadOptaStats, saveMatches, saveOptaStats } from './storage';
 import type { Match, MatchFilters, OptaStatsByCompetition } from './types';
 import { calculateMatchResults } from './utils/predictions';
@@ -115,7 +115,7 @@ export function App() {
           className={activeTab === 'opta' ? 'tab-button active' : 'tab-button'}
           onClick={() => setActiveTab('opta')}
         >
-          Opta Stats
+          Recent Form
         </button>
       </nav>
 
@@ -133,9 +133,9 @@ export function App() {
           </div>
         </>
       ) : (
-        // Opta tab stores reusable team stats and can add generated matches to the tracker.
+        // Recent form tab stores season-average fallbacks and can add generated matches to the tracker.
         <div className="tab-panel">
-          <OptaStatsTab statsByCompetition={optaStats} matches={matches} onChange={setOptaStats} onAddMatch={handleSave} />
+          <RecentFormTab statsByCompetition={optaStats} matches={matches} onChange={setOptaStats} onAddMatch={handleSave} />
         </div>
       )}
 

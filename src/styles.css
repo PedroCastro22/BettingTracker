@@ -528,6 +528,14 @@ td small {
   width: 7%;
 }
 
+.recent-form-table .opta-team-col {
+  width: 52%;
+}
+
+.recent-form-table .opta-recent-col {
+  width: 24%;
+}
+
 /* Darker header rule echoes the screenshot's table separation. */
 .opta-table th {
   border-bottom-color: #1d2433;

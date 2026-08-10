@@ -7,17 +7,30 @@ const STORAGE_KEY = 'football-prediction-tracker.matches';
 const LEGACY_OPTA_STORAGE_KEY = 'football-prediction-tracker.opta-stats';
 const OPTA_STORAGE_PREFIX = 'football-prediction-tracker.opta-stats-';
 
+function derivedTotal(first?: number, second?: number): number | undefined {
+  return first === undefined || second === undefined ? undefined : first + second;
+}
+
+function normalizeMatch(match: Match): Match {
+  return {
+    ...match,
+    actualTotalShots: derivedTotal(match.actualHomeShots, match.actualAwayShots) ?? match.actualTotalShots,
+    actualShotsOnTarget:
+      derivedTotal(match.actualHomeShotsOnTarget, match.actualAwayShotsOnTarget) ?? match.actualShotsOnTarget,
+  };
+}
+
 // Load tracker matches, falling back to sample data when localStorage is empty or corrupt.
 export function loadMatches(): Match[] {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) {
-    return sampleMatches;
+    return sampleMatches.map(normalizeMatch);
   }
 
   try {
-    return JSON.parse(raw) as Match[];
+    return (JSON.parse(raw) as Match[]).map(normalizeMatch);
   } catch {
-    return sampleMatches;
+    return sampleMatches.map(normalizeMatch);
   }
 }
 

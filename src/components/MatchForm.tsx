@@ -26,8 +26,10 @@ type FormState = {
   sotValue: string;
   actualHomeGoals: string;
   actualAwayGoals: string;
-  actualTotalShots: string;
-  actualShotsOnTarget: string;
+  actualHomeShots: string;
+  actualAwayShots: string;
+  actualHomeShotsOnTarget: string;
+  actualAwayShotsOnTarget: string;
   notes: string;
 };
 
@@ -47,8 +49,10 @@ const emptyState: FormState = {
   sotValue: '9.5',
   actualHomeGoals: '',
   actualAwayGoals: '',
-  actualTotalShots: '',
-  actualShotsOnTarget: '',
+  actualHomeShots: '',
+  actualAwayShots: '',
+  actualHomeShotsOnTarget: '',
+  actualAwayShotsOnTarget: '',
   notes: '',
 };
 
@@ -62,13 +66,19 @@ function numberOrZero(value: string): number {
   return value.trim() === '' ? 0 : Number(value);
 }
 
+function derivedTotal(first?: number, second?: number): number | undefined {
+  return first === undefined || second === undefined ? undefined : first + second;
+}
+
 export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps) {
   const [form, setForm] = useState<FormState>(emptyState);
+  const [error, setError] = useState('');
 
   // Populate the form when editing, or reset it when switching back to add mode.
   useEffect(() => {
     if (!editingMatch) {
       setForm(emptyState);
+      setError('');
       return;
     }
 
@@ -87,16 +97,21 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
       sotValue: editingMatch.predictedShotsOnTargetLine ? String(editingMatch.predictedShotsOnTargetLine.value) : '',
       actualHomeGoals: editingMatch.actualHomeGoals === undefined ? '' : String(editingMatch.actualHomeGoals),
       actualAwayGoals: editingMatch.actualAwayGoals === undefined ? '' : String(editingMatch.actualAwayGoals),
-      actualTotalShots: editingMatch.actualTotalShots === undefined ? '' : String(editingMatch.actualTotalShots),
-      actualShotsOnTarget:
-        editingMatch.actualShotsOnTarget === undefined ? '' : String(editingMatch.actualShotsOnTarget),
+      actualHomeShots: editingMatch.actualHomeShots === undefined ? '' : String(editingMatch.actualHomeShots),
+      actualAwayShots: editingMatch.actualAwayShots === undefined ? '' : String(editingMatch.actualAwayShots),
+      actualHomeShotsOnTarget:
+        editingMatch.actualHomeShotsOnTarget === undefined ? '' : String(editingMatch.actualHomeShotsOnTarget),
+      actualAwayShotsOnTarget:
+        editingMatch.actualAwayShotsOnTarget === undefined ? '' : String(editingMatch.actualAwayShotsOnTarget),
       notes: editingMatch.notes ?? '',
     });
+    setError('');
   }, [editingMatch]);
 
   // Small field updater keeps input handlers short and consistent.
   function update(field: keyof FormState, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
+    setError('');
   }
 
   // Changing competition clears teams so a stale team is not kept from another league.
@@ -114,6 +129,29 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
+    const actualHomeShots = numberOrUndefined(form.actualHomeShots);
+    const actualAwayShots = numberOrUndefined(form.actualAwayShots);
+    const actualHomeShotsOnTarget = numberOrUndefined(form.actualHomeShotsOnTarget);
+    const actualAwayShotsOnTarget = numberOrUndefined(form.actualAwayShotsOnTarget);
+
+    if (
+      actualHomeShots !== undefined &&
+      actualHomeShotsOnTarget !== undefined &&
+      actualHomeShotsOnTarget > actualHomeShots
+    ) {
+      setError('Actual home SoT cannot be greater than actual home shots.');
+      return;
+    }
+
+    if (
+      actualAwayShots !== undefined &&
+      actualAwayShotsOnTarget !== undefined &&
+      actualAwayShotsOnTarget > actualAwayShots
+    ) {
+      setError('Actual away SoT cannot be greater than actual away shots.');
+      return;
+    }
+
     onSave({
       id: editingMatch?.id ?? crypto.randomUUID(),
       date: form.date,
@@ -127,12 +165,17 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
       predictedShotsOnTargetLine: parseLine(form.sotDirection, form.sotValue),
       actualHomeGoals: numberOrUndefined(form.actualHomeGoals),
       actualAwayGoals: numberOrUndefined(form.actualAwayGoals),
-      actualTotalShots: numberOrUndefined(form.actualTotalShots),
-      actualShotsOnTarget: numberOrUndefined(form.actualShotsOnTarget),
+      actualHomeShots,
+      actualAwayShots,
+      actualHomeShotsOnTarget,
+      actualAwayShotsOnTarget,
+      actualTotalShots: derivedTotal(actualHomeShots, actualAwayShots),
+      actualShotsOnTarget: derivedTotal(actualHomeShotsOnTarget, actualAwayShotsOnTarget),
       notes: form.notes.trim(),
     });
 
     setForm(emptyState);
+    setError('');
   }
 
   // Team dropdown options depend on the selected competition.
@@ -222,14 +265,23 @@ export function MatchForm({ editingMatch, onSave, onCancelEdit }: MatchFormProps
           <input min="0" type="number" value={form.actualAwayGoals} onChange={(event) => update('actualAwayGoals', event.target.value)} />
         </label>
         <label>
-          Actual total shots
-          <input min="0" type="number" value={form.actualTotalShots} onChange={(event) => update('actualTotalShots', event.target.value)} />
+          Actual home shots
+          <input min="0" type="number" value={form.actualHomeShots} onChange={(event) => update('actualHomeShots', event.target.value)} />
         </label>
         <label>
-          Actual SoT
-          <input min="0" type="number" value={form.actualShotsOnTarget} onChange={(event) => update('actualShotsOnTarget', event.target.value)} />
+          Actual away shots
+          <input min="0" type="number" value={form.actualAwayShots} onChange={(event) => update('actualAwayShots', event.target.value)} />
+        </label>
+        <label>
+          Actual home shots on target
+          <input min="0" type="number" value={form.actualHomeShotsOnTarget} onChange={(event) => update('actualHomeShotsOnTarget', event.target.value)} />
+        </label>
+        <label>
+          Actual away shots on target
+          <input min="0" type="number" value={form.actualAwayShotsOnTarget} onChange={(event) => update('actualAwayShotsOnTarget', event.target.value)} />
         </label>
       </div>
+      {error ? <p className="form-error">{error}</p> : null}
 
       {/* Free-form notes are stored on the match but do not affect calculations. */}
       <label>
