@@ -18,6 +18,8 @@ type RecentTeamAverages = {
   validMatchCount: number;
 };
 
+type RecentFormMode = 'attacking' | 'defending';
+
 // Example payload gives the JSON loader a visible season-average fallback template.
 const exampleJson = `{
   "competition": "La Liga",
@@ -191,20 +193,24 @@ function formatRecentAverage(value?: number): string {
   return String(value).replace(/\.?0+$/, '');
 }
 
-function teamStatsForMatch(match: Match, teamName: string): { shots?: number; shotsOnTarget?: number } | null {
+function teamStatsForMatch(
+  match: Match,
+  teamName: string,
+  mode: RecentFormMode,
+): { shots?: number; shotsOnTarget?: number } | null {
   const normalizedTeam = normalizeTeamName(teamName);
 
   if (normalizeTeamName(match.homeTeam) === normalizedTeam) {
     return {
-      shots: match.actualHomeShots,
-      shotsOnTarget: match.actualHomeShotsOnTarget,
+      shots: mode === 'attacking' ? match.actualHomeShots : match.actualAwayShots,
+      shotsOnTarget: mode === 'attacking' ? match.actualHomeShotsOnTarget : match.actualAwayShotsOnTarget,
     };
   }
 
   if (normalizeTeamName(match.awayTeam) === normalizedTeam) {
     return {
-      shots: match.actualAwayShots,
-      shotsOnTarget: match.actualAwayShotsOnTarget,
+      shots: mode === 'attacking' ? match.actualAwayShots : match.actualHomeShots,
+      shotsOnTarget: mode === 'attacking' ? match.actualAwayShotsOnTarget : match.actualHomeShotsOnTarget,
     };
   }
 
@@ -222,7 +228,7 @@ function isValidRecentStat(stat: { shots?: number; shotsOnTarget?: number } | nu
   );
 }
 
-function calculateRecentTeamAverages(matches: Match[], teamName: string): RecentTeamAverages {
+function calculateRecentTeamAverages(matches: Match[], teamName: string, mode: RecentFormMode): RecentTeamAverages {
   const normalizedTeam = normalizeTeamName(teamName);
 
   if (!normalizedTeam) {
@@ -236,7 +242,7 @@ function calculateRecentTeamAverages(matches: Match[], teamName: string): Recent
         normalizeTeamName(match.awayTeam) === normalizedTeam,
     )
     .sort((a, b) => b.date.localeCompare(a.date))
-    .map((match) => teamStatsForMatch(match, teamName))
+    .map((match) => teamStatsForMatch(match, teamName, mode))
     .filter(isValidRecentStat)
     .slice(0, 5);
 
@@ -247,15 +253,80 @@ function calculateRecentTeamAverages(matches: Match[], teamName: string): Recent
   };
 }
 
-function effectiveAverages(team: OptaTeamStats, recent: RecentTeamAverages): RecentTeamAverages {
+function effectiveAverages(team: OptaTeamStats, recent: RecentTeamAverages, mode: RecentFormMode): RecentTeamAverages {
   if (recent.validMatchCount >= 5) {
     return recent;
   }
 
+  const fallback = mode === 'attacking' ? team.attacking : team.defending;
+
   return {
-    avgShots: team.attacking.avgShots,
-    avgShotsOnTarget: team.attacking.avgShotsOnTarget,
+    avgShots: fallback.avgShots,
+    avgShotsOnTarget: fallback.avgShotsOnTarget,
     validMatchCount: recent.validMatchCount,
+  };
+}
+
+function weightedExpectedVolume(
+  recentAttackingValue: number,
+  opponentRecentDefendingValue: number,
+  seasonAttackingValue: number,
+): number {
+  return recentAttackingValue * 0.5 + opponentRecentDefendingValue * 0.3 + seasonAttackingValue * 0.2;
+}
+
+function calculateWeightedShotProjection({
+  homeStats,
+  awayStats,
+  homeAttackingRecent,
+  awayAttackingRecent,
+  homeDefendingRecent,
+  awayDefendingRecent,
+}: {
+  homeStats: OptaTeamStats;
+  awayStats: OptaTeamStats;
+  homeAttackingRecent: RecentTeamAverages;
+  awayAttackingRecent: RecentTeamAverages;
+  homeDefendingRecent: RecentTeamAverages;
+  awayDefendingRecent: RecentTeamAverages;
+}): { predictedTotalShots: number; predictedShotsOnTarget: number } | null {
+  if (
+    homeAttackingRecent.avgShots === undefined ||
+    awayAttackingRecent.avgShots === undefined ||
+    homeDefendingRecent.avgShots === undefined ||
+    awayDefendingRecent.avgShots === undefined ||
+    homeAttackingRecent.avgShotsOnTarget === undefined ||
+    awayAttackingRecent.avgShotsOnTarget === undefined ||
+    homeDefendingRecent.avgShotsOnTarget === undefined ||
+    awayDefendingRecent.avgShotsOnTarget === undefined
+  ) {
+    return null;
+  }
+
+  const homeExpectedShots = weightedExpectedVolume(
+    homeAttackingRecent.avgShots,
+    awayDefendingRecent.avgShots,
+    homeStats.attacking.avgShots,
+  );
+  const awayExpectedShots = weightedExpectedVolume(
+    awayAttackingRecent.avgShots,
+    homeDefendingRecent.avgShots,
+    awayStats.attacking.avgShots,
+  );
+  const homeExpectedShotsOnTarget = weightedExpectedVolume(
+    homeAttackingRecent.avgShotsOnTarget,
+    awayDefendingRecent.avgShotsOnTarget,
+    homeStats.attacking.avgShotsOnTarget,
+  );
+  const awayExpectedShotsOnTarget = weightedExpectedVolume(
+    awayAttackingRecent.avgShotsOnTarget,
+    homeDefendingRecent.avgShotsOnTarget,
+    awayStats.attacking.avgShotsOnTarget,
+  );
+
+  return {
+    predictedTotalShots: Math.round(homeExpectedShots + awayExpectedShots),
+    predictedShotsOnTarget: Math.round(homeExpectedShotsOnTarget + awayExpectedShotsOnTarget),
   };
 }
 
@@ -276,6 +347,7 @@ export function RecentFormTab({ statsByCompetition, matches, onChange, onAddMatc
   const [competition, setCompetition] = useState(competitions[0] ?? '');
   const [homeTeamId, setHomeTeamId] = useState('');
   const [awayTeamId, setAwayTeamId] = useState('');
+  const [recentFormMode, setRecentFormMode] = useState<RecentFormMode>('attacking');
 
   // Each competition tab reads only its own saved JSON payload.
   const currentPayload = useMemo(
@@ -287,32 +359,55 @@ export function RecentFormTab({ statsByCompetition, matches, onChange, onAddMatc
     return competition ? matches.filter((match) => match.competition === competition) : matches;
   }, [competition, matches]);
   const sortedStats = useMemo(() => [...stats].sort((a, b) => a.team.localeCompare(b.team)), [stats]);
-  const recentAverages = useMemo(() => {
+  const attackingRecentAverages = useMemo(() => {
     return Object.fromEntries(
       stats.map((team) => {
-        const recent = calculateRecentTeamAverages(competitionMatches, team.team);
-        return [team.id, effectiveAverages(team, recent)];
+        const recent = calculateRecentTeamAverages(competitionMatches, team.team, 'attacking');
+        return [team.id, effectiveAverages(team, recent, 'attacking')];
       }),
     );
   }, [competitionMatches, stats]);
+  const defendingRecentAverages = useMemo(() => {
+    return Object.fromEntries(
+      stats.map((team) => {
+        const recent = calculateRecentTeamAverages(competitionMatches, team.team, 'defending');
+        return [team.id, effectiveAverages(team, recent, 'defending')];
+      }),
+    );
+  }, [competitionMatches, stats]);
+  const recentAverages = recentFormMode === 'attacking' ? attackingRecentAverages : defendingRecentAverages;
   const homeStats = stats.find((team) => team.id === homeTeamId);
   const awayStats = stats.find((team) => team.id === awayTeamId);
-  const homeRecent = homeStats ? recentAverages[homeStats.id] : undefined;
-  const awayRecent = awayStats ? recentAverages[awayStats.id] : undefined;
+  const homeAttackingRecent = homeStats ? attackingRecentAverages[homeStats.id] : undefined;
+  const awayAttackingRecent = awayStats ? attackingRecentAverages[awayStats.id] : undefined;
+  const homeDefendingRecent = homeStats ? defendingRecentAverages[homeStats.id] : undefined;
+  const awayDefendingRecent = awayStats ? defendingRecentAverages[awayStats.id] : undefined;
 
   // Goals stay on the existing model; shot volumes now come from recent form or season fallback.
   const prediction =
     homeStats &&
     awayStats &&
     homeStats.id !== awayStats.id &&
-    homeRecent?.avgShots !== undefined &&
-    awayRecent?.avgShots !== undefined &&
-    homeRecent.avgShotsOnTarget !== undefined &&
-    awayRecent.avgShotsOnTarget !== undefined
+    homeAttackingRecent &&
+    awayAttackingRecent &&
+    homeDefendingRecent &&
+    awayDefendingRecent
       ? (() => {
           const basePrediction = calculateOptaMatchPrediction(homeStats, awayStats);
-          const predictedTotalShots = Math.round(homeRecent.avgShots + awayRecent.avgShots);
-          const predictedShotsOnTarget = Math.round(homeRecent.avgShotsOnTarget + awayRecent.avgShotsOnTarget);
+          const shotProjection = calculateWeightedShotProjection({
+            homeStats,
+            awayStats,
+            homeAttackingRecent,
+            awayAttackingRecent,
+            homeDefendingRecent,
+            awayDefendingRecent,
+          });
+
+          if (!shotProjection) {
+            return null;
+          }
+
+          const { predictedTotalShots, predictedShotsOnTarget } = shotProjection;
 
           return {
             ...basePrediction,
@@ -404,7 +499,12 @@ export function RecentFormTab({ statsByCompetition, matches, onChange, onAddMatc
             </div>
           </div>
 
-          <RecentFormTable stats={sortedStats} recentAverages={recentAverages} />
+          <RecentFormTable
+            stats={sortedStats}
+            recentAverages={recentAverages}
+            mode={recentFormMode}
+            onModeChange={setRecentFormMode}
+          />
         </div>
 
         <aside className="opta-side">
@@ -530,16 +630,41 @@ export function RecentFormTab({ statsByCompetition, matches, onChange, onAddMatc
 function RecentFormTable({
   stats,
   recentAverages,
+  mode,
+  onModeChange,
 }: {
   stats: OptaTeamStats[];
   recentAverages: Record<string, RecentTeamAverages>;
+  mode: RecentFormMode;
+  onModeChange: (mode: RecentFormMode) => void;
 }) {
+  const isDefending = mode === 'defending';
+
   return (
     <section className="opta-table-panel">
       <div className="section-heading">
         <div>
           <h2>Recent form</h2>
-          <span>Last-five tracker averages, with season averages until five valid matches are saved.</span>
+          <span>
+            {isDefending ? 'Shots allowed' : 'Shots taken'} from the last five tracker matches, with season averages
+            until five valid matches are saved.
+          </span>
+        </div>
+        <div className="mode-toggle recent-form-toggle" aria-label="Recent form stat type">
+          <button
+            type="button"
+            className={mode === 'attacking' ? 'active' : ''}
+            onClick={() => onModeChange('attacking')}
+          >
+            Attacking
+          </button>
+          <button
+            type="button"
+            className={mode === 'defending' ? 'active' : ''}
+            onClick={() => onModeChange('defending')}
+          >
+            Defending
+          </button>
         </div>
       </div>
 
@@ -553,8 +678,8 @@ function RecentFormTable({
           <thead>
             <tr>
               <th>Team</th>
-              <th>Last 5 match avg shots</th>
-              <th>Last 5 match avg SOT</th>
+              <th>Last 5 match avg {isDefending ? 'shots allowed' : 'shots'}</th>
+              <th>Last 5 match avg {isDefending ? 'SOT allowed' : 'SOT'}</th>
             </tr>
           </thead>
           <tbody>

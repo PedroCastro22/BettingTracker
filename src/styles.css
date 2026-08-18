@@ -86,6 +86,15 @@ button {
   margin-bottom: 18px;
 }
 
+/* Dashboard toolbar keeps the active database selectors beside the current metric scope. */
+.dashboard-toolbar {
+  align-items: start;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
 /* Dashboard heading pairs current competition scope with a stat label. */
 .dashboard-heading {
   align-items: end;
@@ -107,6 +116,49 @@ button {
   font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+/* Active database readout makes season/model scope visible before users read any stats. */
+.active-database {
+  color: #526173;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.active-database strong {
+  color: #1d2433;
+}
+
+.active-database code {
+  background: #e9eef3;
+  border: 1px solid #d7e0e9;
+  border-radius: 6px;
+  color: #304052;
+  font-size: 0.82rem;
+  padding: 2px 7px;
+}
+
+/* Season/model selectors share the dashboard header without crowding the stat cards. */
+.database-controls {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(150px, 180px) minmax(190px, 230px);
+}
+
+/* Inline add forms let users create fresh season/model databases from the dashboard. */
+.database-add-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 220px) minmax(0, 280px);
+  margin-bottom: 12px;
+}
+
+.inline-add-control {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 36px;
 }
 
 /* Six-column stat grid shows all tracker accuracy categories on wide screens. */
@@ -735,9 +787,15 @@ td small {
   .form-grid,
   .line-grid,
   .filters,
+  .database-controls,
+  .database-add-grid,
   .opta-controls,
   .opta-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-toolbar {
+    display: grid;
   }
 
   .opta-toolbar,

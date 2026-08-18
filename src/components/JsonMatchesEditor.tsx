@@ -5,6 +5,9 @@ import type { Match, PredictionLine } from '../types';
 type JsonMatchesEditorProps = {
   matches: Match[];
   open: boolean;
+  season: string;
+  model: string;
+  databaseName: string;
   onClose: () => void;
   onSave: (matches: Match[]) => void;
 };
@@ -126,7 +129,7 @@ function parseMatchesJson(value: string): Match[] {
   return parsed.map(normalizeMatch);
 }
 
-export function JsonMatchesEditor({ matches, open, onClose, onSave }: JsonMatchesEditorProps) {
+export function JsonMatchesEditor({ matches, open, season, model, databaseName, onClose, onSave }: JsonMatchesEditorProps) {
   // Keep the textarea synced with the latest matches each time the modal opens.
   const serializedMatches = useMemo(() => JSON.stringify(matches, null, 2), [matches]);
   const [jsonValue, setJsonValue] = useState(serializedMatches);
@@ -163,9 +166,12 @@ export function JsonMatchesEditor({ matches, open, onClose, onSave }: JsonMatche
           <div>
             <span className="eyebrow">
               <Braces size={16} />
-              Local storage value
+              {season} / {model}
             </span>
             <h2 id="json-editor-title">Edit matches JSON</h2>
+            <p className="storage-key">
+              Saved under <code>{databaseName}</code>
+            </p>
           </div>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Close JSON editor" title="Close">
             <X size={18} />
