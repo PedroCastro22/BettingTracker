@@ -6,7 +6,19 @@ import { JsonMatchesEditor } from './components/JsonMatchesEditor';
 import { MatchForm } from './components/MatchForm';
 import { MatchTable } from './components/MatchTable';
 import { RecentFormTab } from './components/RecentFormTab';
-import { loadMatches, loadOptaStats, saveMatches, saveOptaStats } from './storage';
+import {
+  DEFAULT_MODEL,
+  DEFAULT_SEASON,
+  addAvailableModel,
+  addAvailableSeason,
+  databaseFileName,
+  getAvailableModels,
+  getAvailableSeasons,
+  loadMatches,
+  loadOptaStats,
+  saveMatches,
+  saveOptaStats,
+} from './storage';
 import type { Match, MatchFilters, OptaStatsByCompetition } from './types';
 import { calculateMatchResults } from './utils/predictions';
 
@@ -19,16 +31,27 @@ const defaultFilters: MatchFilters = {
 
 export function App() {
   // Top-level app state is kept here so both tabs can read or update saved predictions.
-  const [matches, setMatches] = useState<Match[]>(() => loadMatches());
+  const [availableSeasons, setAvailableSeasons] = useState<string[]>(() => getAvailableSeasons());
+  const [availableModels, setAvailableModels] = useState<string[]>(() => getAvailableModels());
+  const [selectedSeason, setSelectedSeason] = useState(DEFAULT_SEASON);
+  const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL);
+  const [matches, setMatches] = useState<Match[]>(() => loadMatches(DEFAULT_SEASON, DEFAULT_MODEL));
   const [optaStats, setOptaStats] = useState<OptaStatsByCompetition>(() => loadOptaStats());
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
   const [filters, setFilters] = useState<MatchFilters>(defaultFilters);
   const [activeTab, setActiveTab] = useState<'tracker' | 'opta'>('tracker');
 
+  // Changing season or model swaps the whole match table to that isolated JSON database.
+  useEffect(() => {
+    setMatches(loadMatches(selectedSeason, selectedModel));
+    setEditingMatch(null);
+    setFilters(defaultFilters);
+  }, [selectedSeason, selectedModel]);
+
   // Persist match tracker rows whenever the user adds, edits, deletes, or imports matches.
   useEffect(() => {
-    saveMatches(matches);
+    saveMatches(matches, selectedSeason, selectedModel);
   }, [matches]);
 
   // Persist Opta team stat profiles separately from the match tracker rows.
@@ -83,6 +106,28 @@ export function App() {
     }
   }
 
+  function handleAddSeason(season: string) {
+    const trimmed = season.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    setAvailableSeasons(addAvailableSeason(trimmed));
+    setSelectedSeason(trimmed);
+  }
+
+  function handleAddModel(model: string) {
+    const trimmed = model.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    setAvailableModels(addAvailableModel(trimmed));
+    setSelectedModel(trimmed);
+  }
+
+  const currentDatabaseName = databaseFileName(selectedSeason, selectedModel);
+
   return (
     <main className="app-shell">
       {/* App header keeps the global JSON editor available regardless of active tab. */}
@@ -122,7 +167,19 @@ export function App() {
       {/* Tracker tab is the original dashboard, form, filters, and results table. */}
       {activeTab === 'tracker' ? (
         <>
-          <Dashboard matches={filteredDashboard} competition={filters.competition} />
+          <Dashboard
+            matches={filteredDashboard}
+            competition={filters.competition}
+            seasons={availableSeasons}
+            models={availableModels}
+            selectedSeason={selectedSeason}
+            selectedModel={selectedModel}
+            databaseName={currentDatabaseName}
+            onSeasonChange={setSelectedSeason}
+            onModelChange={setSelectedModel}
+            onAddSeason={handleAddSeason}
+            onAddModel={handleAddModel}
+          />
 
           <div className="content-grid">
             <MatchForm editingMatch={editingMatch} onSave={handleSave} onCancelEdit={() => setEditingMatch(null)} />
@@ -143,6 +200,9 @@ export function App() {
       <JsonMatchesEditor
         matches={matches}
         open={jsonEditorOpen}
+        season={selectedSeason}
+        model={selectedModel}
+        databaseName={currentDatabaseName}
         onClose={() => setJsonEditorOpen(false)}
         onSave={(nextMatches) => {
           setMatches(nextMatches);

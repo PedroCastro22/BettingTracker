@@ -49,6 +49,12 @@ export type MatchFilters = {
   combined: 'all' | 'correct' | 'incorrect';
 };
 
+// Metadata controls which season/model databases are selectable in the UI.
+export type PredictionDatabaseMetadata = {
+  seasons: string[];
+  models: string[];
+};
+
 // Shared Opta metric shape for either attacking output or defensive allowances.
 export type OptaMetricSet = {
   avgXg: number;
